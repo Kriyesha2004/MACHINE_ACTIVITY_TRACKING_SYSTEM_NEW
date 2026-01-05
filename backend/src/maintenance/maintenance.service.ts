@@ -150,6 +150,7 @@ export class MaintenanceService {
         return this.planModel.find({ frequency })
             .populate('machineId')
             .populate('assignedEmployeeId')
+            .populate('performedBy', 'name')
             .sort({ scheduledDate: 1 })
             .exec();
     }
@@ -218,6 +219,8 @@ export class MaintenanceService {
         plan.status = 'completed';
         plan.notes = data.overallNotes || '';
         plan.evidenceUrl = data.evidenceUrl; // Save evidence to plan as well
+        plan.performedBy = data.performedBy || plan.assignedEmployeeId; // Capture who did it
+
         // Store simple list of completed tasks for backward compatibility if needed, 
         // or just rely on the record. Let's populate specific compatible field.
         plan.completedTasks = data.checklist.filter(c => c.isChecked).map(c => c.task);
