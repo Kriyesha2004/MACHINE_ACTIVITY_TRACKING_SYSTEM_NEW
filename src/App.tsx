@@ -19,7 +19,6 @@ import { RoutineMaintenancePage } from './pages/admin/RoutineMaintenancePage';
 import { AddTemplatePage } from './pages/admin/AddTemplatePage';
 import { ManageTemplatesPage } from './pages/admin/ManageTemplatesPage';
 import { MaintenancePlannerPage } from './pages/admin/MaintenancePlannerPage';
-import { ActivePlansPage } from './pages/admin/ActivePlansPage';
 import { EightWeekPlanPage } from './pages/admin/EightWeekPlanPage';
 import { MechanicalIssuesPage } from './pages/admin/MechanicalIssuesPage';
 import { GenerateReportsPage } from './pages/admin/GenerateReportsPage';
@@ -35,6 +34,12 @@ import { ScanQRPage } from './pages/employee/ScanQRPage';
 import { ViewTemplatesPage } from './pages/employee/ViewTemplatesPage';
 import { ReportCreationPage } from './pages/employee/ReportCreationPage';
 import { AddMachineIssuePage } from './pages/employee/AddMachineIssuePage';
+import { EmployeeMaintenancePage } from './pages/employee/EmployeeMaintenancePage';
+
+
+
+
+
 
 // Common Pages
 import ActiveIssuesPage from './pages/common/ActiveIssuesPage';
@@ -148,6 +153,27 @@ const AppContent: React.FC = () => {
           </ProtectedRoute>
         }
       />
+      {/* Template Management */}
+      <Route
+        path="/admin/templates"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AppLayout>
+              <ManageTemplatesPage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/templates/add"
+        element={
+          <ProtectedRoute requiredRole="admin">
+            <AppLayout>
+              <AddTemplatePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
       <Route
         path="/admin/add-template"
         element={
@@ -208,16 +234,7 @@ const AppContent: React.FC = () => {
           </ProtectedRoute>
         }
       />
-      <Route
-        path="/admin/8-week/active"
-        element={
-          <ProtectedRoute requiredRole="admin">
-            <AppLayout>
-              <ActivePlansPage />
-            </AppLayout>
-          </ProtectedRoute>
-        }
-      />
+
       <Route
         path="/admin/8-week/planner"
         element={
@@ -316,6 +333,16 @@ const AppContent: React.FC = () => {
           <ProtectedRoute requiredRole="employee">
             <AppLayout>
               <AddMachineIssuePage />
+            </AppLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employee/maintenance"
+        element={
+          <ProtectedRoute requiredRole="employee">
+            <AppLayout>
+              <EmployeeMaintenancePage />
             </AppLayout>
           </ProtectedRoute>
         }

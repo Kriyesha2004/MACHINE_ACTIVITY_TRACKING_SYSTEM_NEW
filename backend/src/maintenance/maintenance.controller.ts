@@ -64,57 +64,30 @@ export class MaintenanceController {
         return this.maintenanceService.getPlanById(id);
     }
 
+    @Post('plans/:id/assign')
+    async assignPlan(
+        @Param('id') id: string,
+        @Body() body: { employeeId: string }
+    ) {
+        return this.maintenanceService.assignPlan(id, body.employeeId);
+    }
+
     @Post('plans/:id/status')
     async updatePlan(
         @Param('id') id: string,
-        @Body() body: { status?: string; notes?: string; completedTasks?: string[]; evidenceUrl?: string }
+        @Body() body: { status?: string; notes?: string; completedTasks?: string[]; evidenceUrl?: string; performedBy?: string; checklist?: any[] }
     ) {
         if (body.status === 'completed') {
             return this.maintenanceService.completePlan(id, {
-                checklist: [], // This might need adjustment if checklist is passed separately, but based on service signature:
-                // Wait, service completePlan takes (planId, data). Data has checklist.
-                // The current controller implementation was:
-                // return this.maintenanceService.updateAllocation(id, body);
-                // But wait, completePlan is different. 
-                // Let's look at the previous code again.
-                // Previous code: return this.maintenanceService.updateAllocation(id, body);
-                // But updateAllocation only handles status/notes/completedTasks.
-                // If status is completed, we probably want completePlan?
-                // The service has `completePlan`.
-                // Let's defer to the service logic or update the controller to switch methods.
-                // For now, I will just update the signature of updateAllocation in the service to take evidenceUrl too, 
-                // OR better, update the controller to call completePlan if status is completed.
-                // However, the frontend calls `.../status` with `status: 'completed'`.
-                // So I should check the status here.
+                checklist: body.checklist || [],
+                overallNotes: body.notes,
+                evidenceUrl: body.evidenceUrl,
+                performedBy: body.performedBy
             });
-        }
-        // Actually, let's keep it simple and just forward to updateAllocation for now, 
-        // and I will update updateAllocation in service to handle evidenceUrl.
-        // Wait, completePlan IS the one that creates the record.
-        // So I should stick to the existing pattern or improve it.
-        // The existing controller was just calling updateAllocation.
-        // Let's modify it to handle "completed" properly if it wasn't already.
-        // Checking previous service code... 
-        // Service had `updateAllocation` AND `completePlan`.
-        // Controller ONLY called `updateAllocation`.
-        // This means `completePlan` was unused or I missed it.
-        // Ah, if I look at `MaintenanceExecutionPage.tsx`...
-        // It calls `.../plans/${planId}/status`.
-        // So the frontend thinks it's just updating status.
-        // If I want to use `completePlan` (which creates a record), I should switch to it here.
-
-        if (body.status === 'completed') {
-            // We need the checklist data which might be in body or we assume it's already in the plan (completedTasks).
-            // The frontend sends `completedTasks` (string[]).
-            // `completePlan` expects full checklist object array.
-            // This is a disconnect.
-            // For now, to solve the immediate request (upload evidence), I will add `evidenceUrl` to `updateAllocation` 
-            // and ensure it is saved to the plan. 
-            // Later, when `completePlan` is properly wired, it can copy it.
-            return this.maintenanceService.updateAllocation(id, body);
         }
         return this.maintenanceService.updateAllocation(id, body);
     }
+
     @Get('history/:machineId')
     async getMachineHistory(@Param('machineId') machineId: string) {
         return this.maintenanceService.getMachineHistory(machineId);

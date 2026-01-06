@@ -118,6 +118,8 @@ export const MaintenanceExecutionPage: React.FC = () => {
     if (loading) return <div className="p-12 text-center text-slate-400">Loading plan details...</div>;
     if (!plan) return <div className="p-12 text-center text-red-400">Plan not found</div>;
 
+    const isCompleted = plan.status === 'completed';
+
     return (
         <div className="w-full p-6">
             <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-slate-400 hover:text-white mb-4 transition-colors">
@@ -125,8 +127,8 @@ export const MaintenanceExecutionPage: React.FC = () => {
             </button>
 
             <PageHeader
-                title={`Perform Maintenance: ${plan.machineId?.name}`}
-                subtitle={`Plan: ${plan.name} | SN: ${plan.machineId?.serialNumber}`}
+                title={`${isCompleted ? 'View' : 'Perform'} Maintenance: ${plan.machineId?.name}`}
+                subtitle={`Plan: ${plan.name} | SN: ${plan.machineId?.serialNumber} ${isCompleted ? '(Completed)' : ''}`}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -161,7 +163,7 @@ export const MaintenanceExecutionPage: React.FC = () => {
                                     `}>
                                         <div className="flex items-start justify-between gap-4">
                                             {/* Checkbox Section */}
-                                            <label className="flex items-start gap-4 cursor-pointer flex-1">
+                                            <label className={`flex items-start gap-4 flex-1 ${!isCompleted ? 'cursor-pointer' : ''}`}>
                                                 <div className={`mt-0.5 w-5 h-5 rounded border flex items-center justify-center shrink-0 transition-colors
                                                      ${itemData.isChecked ? 'bg-emerald-500 border-emerald-500' : 'border-slate-500'}
                                                 `}>
@@ -171,7 +173,8 @@ export const MaintenanceExecutionPage: React.FC = () => {
                                                     type="checkbox"
                                                     className="hidden"
                                                     checked={itemData.isChecked}
-                                                    onChange={() => handleCheck(task)}
+                                                    onChange={() => !isCompleted && handleCheck(task)}
+                                                    disabled={isCompleted}
                                                 />
                                                 <span className={itemData.isChecked ? 'text-emerald-100 line-through decoration-emerald-500/50' : 'text-slate-300'}>
                                                     {task}
@@ -179,23 +182,25 @@ export const MaintenanceExecutionPage: React.FC = () => {
                                             </label>
 
                                             {/* Action Section: Camera */}
-                                            <div className="shrink-0 flex items-center gap-2">
-                                                <label className={`p-2 rounded-lg cursor-pointer transition-colors
-                                                    ${itemData.photoUrl
-                                                        ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
-                                                        : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
-                                                    }
-                                                 `}>
-                                                    <input
-                                                        type="file"
-                                                        accept="image/*"
-                                                        className="hidden"
-                                                        disabled={isUploading}
-                                                        onChange={(e) => handleFileUpload(e, task)}
-                                                    />
-                                                    <Camera size={20} className={isUploading ? "animate-spin" : ""} />
-                                                </label>
-                                            </div>
+                                            {!isCompleted && (
+                                                <div className="shrink-0 flex items-center gap-2">
+                                                    <label className={`p-2 rounded-lg cursor-pointer transition-colors
+                                                        ${itemData.photoUrl
+                                                            ? 'bg-blue-500/20 text-blue-400 hover:bg-blue-500/30'
+                                                            : 'bg-slate-700 text-slate-400 hover:bg-slate-600 hover:text-white'
+                                                        }
+                                                     `}>
+                                                        <input
+                                                            type="file"
+                                                            accept="image/*"
+                                                            className="hidden"
+                                                            disabled={isUploading || isCompleted}
+                                                            onChange={(e) => handleFileUpload(e, task)}
+                                                        />
+                                                        <Camera size={20} className={isUploading ? "animate-spin" : ""} />
+                                                    </label>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Evidence Preview */}
@@ -207,13 +212,15 @@ export const MaintenanceExecutionPage: React.FC = () => {
                                                     className="h-20 w-20 object-cover rounded-md border border-slate-600 cursor-pointer hover:scale-105 transition-transform"
                                                     onClick={() => window.open(`http://localhost:3000${itemData.photoUrl}`, '_blank')}
                                                 />
-                                                <button
-                                                    onClick={() => removePhoto(task)}
-                                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                    title="Remove photo"
-                                                >
-                                                    <XCircle size={14} />
-                                                </button>
+                                                {!isCompleted && (
+                                                    <button
+                                                        onClick={() => removePhoto(task)}
+                                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        title="Remove photo"
+                                                    >
+                                                        <XCircle size={14} />
+                                                    </button>
+                                                )}
                                             </div>
                                         )}
                                     </div>
@@ -239,27 +246,42 @@ export const MaintenanceExecutionPage: React.FC = () => {
                             placeholder="Add optional notes about the maintenance..."
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
+                            disabled={isCompleted}
                         />
                     </div>
 
                     {/* Actions */}
-                    <button
-                        onClick={handleComplete}
-                        disabled={totalTasks > 0 && !canComplete}
-                        className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all
-                            ${(totalTasks === 0 || canComplete)
-                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
-                                : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                            }
-                        `}
-                    >
-                        <CheckCircle size={20} />
-                        Complete Maintenance
-                    </button>
-                    {!canComplete && totalTasks > 0 && (
-                        <p className="text-xs text-center text-amber-500/80">
-                            Please complete all checklist items before finishing.
-                        </p>
+                    {!isCompleted ? (
+                        <>
+                            <button
+                                onClick={handleComplete}
+                                disabled={totalTasks > 0 && !canComplete}
+                                className={`w-full py-4 rounded-lg font-semibold text-lg flex items-center justify-center gap-2 transition-all
+                                    ${(totalTasks === 0 || canComplete)
+                                        ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-900/20'
+                                        : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                    }
+                                `}
+                            >
+                                <CheckCircle size={20} />
+                                Complete Maintenance
+                            </button>
+                            {!canComplete && totalTasks > 0 && (
+                                <p className="text-xs text-center text-amber-500/80">
+                                    Please complete all checklist items before finishing.
+                                </p>
+                            )}
+                        </>
+                    ) : (
+                        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 text-center">
+                            <div className="flex items-center justify-center gap-2 text-emerald-400 font-medium mb-1">
+                                <CheckCircle size={20} />
+                                Maintenance Completed
+                            </div>
+                            <p className="text-xs text-emerald-400/70">
+                                This plan has been submitted and is now read-only.
+                            </p>
+                        </div>
                     )}
                 </div>
             </div>

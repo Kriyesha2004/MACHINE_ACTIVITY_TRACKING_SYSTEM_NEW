@@ -56,8 +56,9 @@ const Sidebar: React.FC = () => {
         { label: 'Daily Checklist', path: '/admin/daily-maintenance', icon: <Calendar size={16} /> },
         { label: 'Monthly Checklist', path: '/admin/monthly-maintenance', icon: <Calendar size={16} /> },
         { label: '8-Week Checklist', path: '/admin/8-week-plan', icon: <TrendingUp size={16} /> },
-        { label: 'Planner', path: '/admin/8-week/planner', icon: <Plus size={16} /> },
-        { label: 'Templates', path: '/admin/8-week/templates', icon: <FileText size={16} /> },
+        { label: 'Manage Templates', path: '/admin/templates', icon: <FileText size={16} /> },
+        { label: 'Maintenance Planner', path: '/admin/8-week/planner', icon: <Calendar size={16} /> },
+
       ],
     },
 
@@ -110,6 +111,7 @@ const Sidebar: React.FC = () => {
       icon: <Wrench size={20} />,
       employeeOnly: true,
       children: [
+        { label: 'Maintenance Tasks', path: '/employee/maintenance', icon: <Wrench size={16} /> },
         { label: 'View Templates', path: '/employee/view-templates', icon: <FileText size={16} /> },
       ],
     },

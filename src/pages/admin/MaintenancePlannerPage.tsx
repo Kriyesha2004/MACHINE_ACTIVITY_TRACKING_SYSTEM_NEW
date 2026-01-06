@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader, FormInput } from '../../components/shared';
 import { useNavigate } from 'react-router-dom';
 import { Save, Users, Zap } from 'lucide-react';
+import { CycleCalendar } from '../../components/maintenance/CycleCalendar';
 
 export const MaintenancePlannerPage: React.FC = () => {
     const navigate = useNavigate();
@@ -103,35 +104,63 @@ export const MaintenancePlannerPage: React.FC = () => {
             <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 space-y-6 max-w-4xl">
                 {/* Step 1: Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormInput
-                        label="Plan Name"
-                        value={formData.name}
-                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="e.g. Q1 2025 Standard Maintenance"
-                    />
-                    <div>
-                        <label className="block text-sm font-medium text-slate-300 mb-2">Template</label>
-                        <select
-                            className="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white"
-                            value={formData.templateId}
-                            onChange={e => setFormData({ ...formData, templateId: e.target.value })}
-                        >
-                            <option value="">Select Template...</option>
-                            {templates.map(t => <option key={t._id} value={t._id}>{t.name} ({t.frequency})</option>)}
-                        </select>
+                    <div className="space-y-6">
+                        <FormInput
+                            label="Plan Name"
+                            value={formData.name}
+                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                            placeholder="e.g. Q1 2025 Standard Maintenance"
+                        />
+                        <div>
+                            <label className="block text-sm font-medium text-slate-300 mb-2">Template</label>
+                            <select
+                                className="w-full bg-slate-700 border border-slate-600 rounded-lg p-2 text-white"
+                                value={formData.templateId}
+                                onChange={e => setFormData({ ...formData, templateId: e.target.value })}
+                            >
+                                <option value="">Select Template...</option>
+                                {templates.map(t => <option key={t._id} value={t._id}>{t.name} ({t.frequency})</option>)}
+                            </select>
+                        </div>
+                        <FormInput
+                            label="Start Date"
+                            type="date"
+                            value={formData.startDate}
+                            onChange={e => setFormData({ ...formData, startDate: e.target.value })}
+                        />
+                        <FormInput
+                            label="End Date"
+                            type="date"
+                            value={formData.endDate}
+                            onChange={e => setFormData({ ...formData, endDate: e.target.value })}
+                        />
+                         {frequency === '8-Weekly' && (
+                            <p className="text-xs text-amber-500 mt-2">
+                                Tip: Use the calendar to select an optimal end date aligned with 8-week cycles.
+                            </p>
+                        )}
                     </div>
-                    <FormInput
-                        label="Start Date"
-                        type="date"
-                        value={formData.startDate}
-                        onChange={e => setFormData({ ...formData, startDate: e.target.value })}
-                    />
-                    <FormInput
-                        label="End Date"
-                        type="date"
-                        value={formData.endDate}
-                        onChange={e => setFormData({ ...formData, endDate: e.target.value })}
-                    />
+
+                    {/* Calendar Column */}
+                    <div>
+                        {frequency === '8-Weekly' ? (
+                            <div className="flex flex-col items-center">
+                                <label className="block text-sm font-medium text-slate-300 mb-2 w-full text-left">Cycle Helper</label>
+                                <CycleCalendar
+                                    startDate={formData.startDate}
+                                    selectedEndDate={formData.endDate}
+                                    onSelectEndDate={(date: string) => setFormData(prev => ({ ...prev, endDate: date }))}
+                                />
+                            </div>
+                        ) : (
+                            <div className="h-full flex items-center justify-center border border-dashed border-slate-700 rounded-lg bg-slate-800/30 text-slate-500 p-6 text-center">
+                                <div className="max-w-xs">
+                                    <p className="mb-2">Select an <strong>8-Weekly</strong> template to see the cycle planner.</p>
+                                    <p className="text-xs opacity-60">Daily and Monthly plans repeat automatically until the End Date.</p>
+                                </div>
+                            </div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Step 2: Select Machines & Assign Users */}

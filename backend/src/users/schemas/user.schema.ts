@@ -14,10 +14,10 @@ export class User {
     @Prop({ required: true })
     name: string;
 
-    @Prop({ required: true, enum: ['admin', 'employee', 'supervisor', 'technician'], default: 'employee' })
+    @Prop({ enum: ['admin', 'employee', 'supervisor', 'technician'], default: 'employee' })
     role: string;
 
-    @Prop({ required: true })
+    @Prop()
     department: string;
 }
 

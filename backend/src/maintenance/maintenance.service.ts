@@ -81,6 +81,12 @@ export class MaintenanceService {
         }
 
         const validAllocations: any[] = [];
+        const start = new Date(data.startDate);
+        const end = new Date(data.endDate);
+
+        if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
+             throw new BadRequestException('Invalid date range.');
+        }
 
         for (const allocation of data.allocations) {
             let assignedUser = allocation.assignedUserId;
@@ -95,19 +101,46 @@ export class MaintenanceService {
                 assignedUser = undefined;
             }
 
-            validAllocations.push({
-                name: data.name || `${template.name} - ${template.frequency}`,
-                templateId: template._id,
-                frequency: template.frequency,
-                machineId: allocation.machineId,
-                assignedEmployeeId: assignedUser,
-                scheduledDate: new Date(data.startDate), // Using startDate for now
-                status: 'planned',
-                notes: `Cycle: ${data.startDate} to ${data.endDate}`
-            });
+            // --- Recurring Generation Loop ---
+            let currentDate = new Date(start);
+            let cycleIndex = 1;
+
+            while (currentDate <= end) {
+                let planName = data.name || `${template.name} - ${template.frequency}`;
+                
+                // For 8-Weekly, add cycle info to help distinguish
+                if (template.frequency === '8-Weekly') {
+                    planName += ` (Cycle ${cycleIndex})`;
+                }
+
+                validAllocations.push({
+                    name: planName,
+                    templateId: template._id,
+                    frequency: template.frequency,
+                    machineId: allocation.machineId,
+                    assignedEmployeeId: assignedUser,
+                    scheduledDate: new Date(currentDate), 
+                    status: 'planned',
+                    notes: `Recurring Plan: ${new Date(currentDate).toLocaleDateString()}`
+                });
+
+                // Increment Date based on Frequency
+                if (template.frequency === 'Daily') {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                } else if (template.frequency === 'Monthly') {
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                } else if (template.frequency === '8-Weekly') {
+                     currentDate.setDate(currentDate.getDate() + 56);
+                     cycleIndex++;
+                } else {
+                    // Safety break for unknown frequency to prevent infinite loop
+                    break;
+                }
+            }
         }
 
         // 3. Bulk Create
+        // chunking could be considered for very large ranges, but fine for now
         const createdPlans = await this.planModel.insertMany(validAllocations);
         return createdPlans;
     }
@@ -117,6 +150,7 @@ export class MaintenanceService {
         return this.planModel.find({ frequency })
             .populate('machineId')
             .populate('assignedEmployeeId')
+            .populate('performedBy', 'name')
             .sort({ scheduledDate: 1 })
             .exec();
     }
@@ -144,10 +178,20 @@ export class MaintenanceService {
         return plan.save();
     }
 
+    async assignPlan(planId: string, employeeId: string) {
+        const plan = await this.planModel.findById(planId);
+        if (!plan) throw new BadRequestException('Plan not found');
+
+        plan.assignedEmployeeId = employeeId;
+        plan.status = 'active'; // Ensure it's active when assigned
+        return plan.save();
+    }
+
     async completePlan(planId: string, data: {
         checklist: { task: string; isChecked: boolean; photoUrl?: string; notes?: string }[];
         overallNotes?: string;
-        performedBy?: string; // Optional if not strictly enforced yet
+        performedBy?: string;
+        evidenceUrl?: string;
     }) {
         const plan = await this.planModel.findById(planId);
         if (!plan) throw new BadRequestException('Plan not found');
@@ -166,13 +210,17 @@ export class MaintenanceService {
             date: new Date(),
             performedBy: data.performedBy || plan.assignedEmployeeId,
             checklist: data.checklist,
-            overallNotes: data.overallNotes
+            overallNotes: data.overallNotes,
+            evidenceUrl: data.evidenceUrl
         });
         await record.save();
 
         // Update plan status
         plan.status = 'completed';
         plan.notes = data.overallNotes || '';
+        plan.evidenceUrl = data.evidenceUrl; // Save evidence to plan as well
+        plan.performedBy = data.performedBy || plan.assignedEmployeeId; // Capture who did it
+
         // Store simple list of completed tasks for backward compatibility if needed, 
         // or just rely on the record. Let's populate specific compatible field.
         plan.completedTasks = data.checklist.filter(c => c.isChecked).map(c => c.task);
@@ -186,8 +234,8 @@ export class MaintenanceService {
         // Here we just return the local path served statically.
         // Assuming static serve is set up for 'uploads' folder.
         // If not, we might need a controller to serve it, but let's assume standard static setup.
-        // Returning relative path
-        return { url: `/${file.filename}` };
+        // Returning relative path matching ServeStaticModule 'serveRoot'
+        return { url: `uploads/${file.filename}` };
     }
 
     // Generic

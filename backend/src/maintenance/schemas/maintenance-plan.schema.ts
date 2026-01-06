@@ -33,7 +33,10 @@ export class MaintenancePlan {
     notes: string;
 
     @Prop()
-    evidenceUrl: string;
+    evidenceUrl?: string;
+
+    @Prop({ type: Types.ObjectId, ref: 'User' })
+    performedBy?: string; // Who actually completed the task (especially for Daily/unassigned)
 }
 
 export const MaintenancePlanSchema = SchemaFactory.createForClass(MaintenancePlan);
