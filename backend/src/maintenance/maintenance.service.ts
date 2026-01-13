@@ -85,7 +85,7 @@ export class MaintenanceService {
         const end = new Date(data.endDate);
 
         if (isNaN(start.getTime()) || isNaN(end.getTime()) || start > end) {
-             throw new BadRequestException('Invalid date range.');
+            throw new BadRequestException('Invalid date range.');
         }
 
         for (const allocation of data.allocations) {
@@ -107,7 +107,7 @@ export class MaintenanceService {
 
             while (currentDate <= end) {
                 let planName = data.name || `${template.name} - ${template.frequency}`;
-                
+
                 // For 8-Weekly, add cycle info to help distinguish
                 if (template.frequency === '8-Weekly') {
                     planName += ` (Cycle ${cycleIndex})`;
@@ -119,7 +119,7 @@ export class MaintenanceService {
                     frequency: template.frequency,
                     machineId: allocation.machineId,
                     assignedEmployeeId: assignedUser,
-                    scheduledDate: new Date(currentDate), 
+                    scheduledDate: new Date(currentDate),
                     status: 'planned',
                     notes: `Recurring Plan: ${new Date(currentDate).toLocaleDateString()}`
                 });
@@ -130,8 +130,8 @@ export class MaintenanceService {
                 } else if (template.frequency === 'Monthly') {
                     currentDate.setMonth(currentDate.getMonth() + 1);
                 } else if (template.frequency === '8-Weekly') {
-                     currentDate.setDate(currentDate.getDate() + 56);
-                     cycleIndex++;
+                    currentDate.setDate(currentDate.getDate() + 56);
+                    cycleIndex++;
                 } else {
                     // Safety break for unknown frequency to prevent infinite loop
                     break;
@@ -149,6 +149,7 @@ export class MaintenanceService {
         // This powers the UI "Filters"
         return this.planModel.find({ frequency })
             .populate('machineId')
+            .populate('templateId') // Ensure we get tasks
             .populate('assignedEmployeeId')
             .populate('performedBy', 'name')
             .sort({ scheduledDate: 1 })
@@ -242,6 +243,7 @@ export class MaintenanceService {
     async getActivePlans() {
         return this.planModel.find({ status: { $in: ['active', 'planned'] } })
             .populate('machineId')
+            .populate('templateId')
             .exec();
     }
 

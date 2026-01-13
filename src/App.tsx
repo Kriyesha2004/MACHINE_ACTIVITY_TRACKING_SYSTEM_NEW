@@ -29,7 +29,7 @@ import { MaintenanceExecutionPage } from './pages/admin/MaintenanceExecutionPage
 
 // Employee Pages
 import EmployeeDashboard from './pages/employee/EmployeeDashboard';
-import MyTasksPage from './pages/employee/MyTasksPage';
+// import MyTasksPage from './pages/employee/MyTasksPage'; // Removed
 import { ScanQRPage } from './pages/employee/ScanQRPage';
 import { ViewTemplatesPage } from './pages/employee/ViewTemplatesPage';
 import { ReportCreationPage } from './pages/employee/ReportCreationPage';
@@ -292,7 +292,7 @@ const AppContent: React.FC = () => {
         element={
           <ProtectedRoute requiredRole="employee">
             <AppLayout>
-              <MyTasksPage />
+              <EmployeeMaintenancePage />
             </AppLayout>
           </ProtectedRoute>
         }

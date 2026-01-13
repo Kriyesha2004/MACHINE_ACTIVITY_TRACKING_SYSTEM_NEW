@@ -1,115 +1,122 @@
-import React, { useState } from 'react';
-import { Eye, Download } from 'lucide-react';
-import { PageHeader, DataTable, StatusBadge } from '../../components/shared';
-import { mockTemplates } from '../../utils/mockData';
-
-interface Template {
-  id: string;
-  name: string;
-  frequency: string;
-  checklist: string[];
-  createdBy: string;
-  status: 'active' | 'inactive';
-}
+import React, { useState, useEffect } from 'react';
+import { PageHeader } from '../../components/shared';
+import { FileText, Play, Activity } from 'lucide-react';
+import { AdHocStartModal } from '../../components/maintenance/AdHocStartModal';
+import { MaintenanceCompletionModal } from '../../components/maintenance/MaintenanceCompletionModal';
 
 export const ViewTemplatesPage: React.FC = () => {
-  const [templates] = useState<Template[]>(mockTemplates);
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Modal States
+  const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
+  const [showStartModal, setShowStartModal] = useState(false);
+  const [createdPlan, setCreatedPlan] = useState<any | null>(null);
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/maintenance/templates');
+      const data = await response.json();
+      setTemplates(data);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStartClick = (template: any) => {
+    setSelectedTemplate(template);
+    setShowStartModal(true);
+  };
+
+  const handlePlanCreated = (plan: any) => {
+    setShowStartModal(false);
+    setCreatedPlan(plan);
+    setShowCompleteModal(true);
+  };
+
+  const handleCompletionSuccess = () => {
+    setShowCompleteModal(false);
+    // Refresh templates logic if needed, but templates are static usually.
+  };
 
   return (
     <div className="w-full p-6">
-      <PageHeader
-        title="Maintenance Templates"
-        subtitle="View and download routine maintenance templates (Admin-controlled)"
-      />
+      <PageHeader title="Maintenance Templates" subtitle="View details of maintenance procedures" />
 
-      <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-        <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            <strong>Note:</strong> These templates are created and controlled by administrators. You can view and download them to perform maintenance tasks.
-          </p>
-        </div>
+      {loading ? (
+        <div className="p-12 text-center text-slate-400">Loading templates...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {templates.map(template => (
+            <div key={template._id} className="bg-slate-800/50 border border-slate-700 rounded-lg p-6 hover:shadow-lg transition-all">
+              <div className="flex justify-between items-start mb-4">
+                <div className={`p-3 rounded-lg ${template.frequency === 'Daily' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+                  {template.frequency === 'Daily' ? <Activity size={24} /> : <FileText size={24} />}
+                </div>
+                <span className="px-2 py-1 bg-slate-700/50 rounded text-xs text-slate-300 border border-slate-600">
+                  {template.frequency}
+                </span>
+              </div>
 
-        <DataTable
-          columns={[
-            { key: 'name', label: 'Template Name', sortable: true },
-            { key: 'frequency', label: 'Frequency', sortable: true },
-            {
-              key: 'checklist',
-              label: 'Items',
-              render: (checklist: any) => <span className="text-sm">{checklist.length} items</span>,
-            },
-            { key: 'createdBy', label: 'Created By', sortable: true },
-            {
-              key: 'status',
-              label: 'Status',
-              render: (status: any) => <StatusBadge status={status as any} />,
-            },
-            {
-              key: 'id',
-              label: 'Actions',
-              render: (_, row: any) => (
+              <h3 className="text-lg font-semibold text-white mb-2">{template.name}</h3>
+              <p className="text-slate-400 text-sm mb-4 line-clamp-2">{template.description || 'No description provided.'}</p>
+
+              <div className="space-y-3 mb-6">
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Checklist Preview</h4>
+                <ul className="space-y-1">
+                  {template.tasks.slice(0, 3).map((task: string, i: number) => (
+                    <li key={i} className="text-sm text-slate-300 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                      <span className="truncate">{task}</span>
+                    </li>
+                  ))}
+                  {template.tasks.length > 3 && (
+                    <li className="text-xs text-slate-500 pl-3.5">+ {template.tasks.length - 3} more tasks</li>
+                  )}
+                </ul>
+              </div>
+
+              <div className="pt-4 border-t border-slate-700 flex gap-3">
                 <button
-                  onClick={() => setSelectedTemplate(row)}
-                  className="p-1 text-blue-600 hover:bg-blue-100 rounded"
+                  className="flex-1 py-2 px-4 bg-slate-700 hover:bg-slate-600 text-white text-sm rounded-lg transition-colors font-medium text-center"
+                  onClick={() => {/* Maybe view full details modal later */ }}
                 >
-                  <Eye className="w-4 h-4" />
+                  View Details
                 </button>
-              ),
-            },
-          ]}
-          data={templates}
-          rowKey="id"
-          searchableColumns={['name', 'frequency']}
-          pageSize={10}
-        />
-      </div>
-
-      {selectedTemplate && (
-        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg p-6 max-w-sm max-h-96 overflow-y-auto">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">{selectedTemplate.name}</h3>
-
-          <div className="space-y-3 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-700">Frequency:</span>
-              <span className="text-sm text-gray-600">{selectedTemplate.frequency}</span>
+                <button
+                  onClick={() => handleStartClick(template)}
+                  className="flex-1 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white text-sm rounded-lg transition-colors font-medium flex items-center justify-center gap-2"
+                >
+                  <Play size={16} fill="currentColor" />
+                  Start
+                </button>
+              </div>
             </div>
-
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-semibold text-gray-700">Status:</span>
-              <StatusBadge status={selectedTemplate.status} />
-            </div>
-
-            <div>
-              <span className="text-sm font-semibold text-gray-700 block mb-2">Checklist Items:</span>
-              <ul className="space-y-1">
-                {selectedTemplate.checklist.map((item, idx) => (
-                  <li key={idx} className="text-sm text-gray-600 flex items-center gap-2">
-                    <input type="checkbox" className="w-4 h-4" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <button
-              onClick={() => console.log('Download:', selectedTemplate.name)}
-              className="flex-1 bg-blue-600 text-white py-2 rounded text-sm hover:bg-blue-700 flex items-center justify-center gap-2"
-            >
-              <Download className="w-4 h-4" />
-              Download
-            </button>
-            <button
-              onClick={() => setSelectedTemplate(null)}
-              className="flex-1 bg-gray-200 text-gray-800 py-2 rounded text-sm hover:bg-gray-300"
-            >
-              Close
-            </button>
-          </div>
+          ))}
         </div>
       )}
+
+      {/* Modals */}
+      <AdHocStartModal
+        isOpen={showStartModal}
+        onClose={() => setShowStartModal(false)}
+        template={selectedTemplate}
+        onPlanCreated={handlePlanCreated}
+      />
+
+      <MaintenanceCompletionModal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        plan={createdPlan}
+        onComplete={handleCompletionSuccess}
+      />
     </div>
   );
 };
