@@ -136,7 +136,7 @@ export const AddMachinePage: React.FC = () => {
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-secondary-light/20 border-dashed rounded-lg cursor-pointer bg-primary-dark/50 hover:bg-primary-dark/80 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <Upload className="w-8 h-8 mb-3 text-secondary-light" />
-                    <p className="mb-2 text-sm text-secondary-light"><span className="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p className="mb-2 text-sm text-secondary-light"><span className="font-semibold">Click For upload</span> or drag and drop</p>
                     <p className="text-xs text-secondary-light/70">{imageFile ? imageFile.name : 'SVG, PNG, JPG or GIF'}</p>
                   </div>
                   <input type="file" className="hidden" onChange={handleImageChange} accept="image/*" />
