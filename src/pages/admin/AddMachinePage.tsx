@@ -131,7 +131,7 @@ export const AddMachinePage: React.FC = () => {
 
             {/* Image Upload */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-secondary-light">Machine Image (Optional)</label>
+              <label className="block text-sm font-medium text-secondary-light">Machine Image (Optional for this)</label>
               <div className="flex items-center justify-center w-full">
                 <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-secondary-light/20 border-dashed rounded-lg cursor-pointer bg-primary-dark/50 hover:bg-primary-dark/80 transition-colors">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
